@@ -22,6 +22,6 @@ FROM base
 WORKDIR /fuel
 COPY --from=production-dependencies /fuel/node_modules /fuel/node_modules
 COPY --from=build /fuel/build /fuel/build
-ADD package.json .
+ADD package.json CHECKS ./
 
 CMD ["npm", "start"]
