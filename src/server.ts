@@ -3,8 +3,6 @@ import { handleRequest } from "./handler";
 
 const app = express();
 
-console.info("[DATABASE_URL]: ", process.env.DATABASE_URL);
-
 app.use((request, _, next) => {
   console.log(`[REQ] ${request.url} - ${request.ip}`);
   next();
