@@ -20,6 +20,6 @@ jobs:
       - name: Deploy application
         uses: dokku/github-action@v1.4.0
         with:
-          git_remote_url: "ssh://dokku@ssh.jensmeindertsma.com:22/fuel"
+          git_remote_url: "ssh://dokku@${{ secrets.SSH_HOST }}:22/fuel"
           branch: main
           ssh_private_key: ${{ secrets.SSH_PRIVATE_KEY }}
