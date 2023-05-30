@@ -24,7 +24,8 @@ WORKDIR /fuel
 COPY --from=production-dependencies /fuel/node_modules /fuel/node_modules
 COPY --from=build /fuel/node_modules/.prisma /fuel/node_modules/.prisma
 COPY --from=build /fuel/build /fuel/build
-ADD . .
+ADD CHECKS package.json ./
+ADD prisma .
 RUN ls
 
 CMD ["npm", "start"]
