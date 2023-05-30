@@ -1,5 +1,7 @@
+import { PrismaClient } from "@prisma/client";
 import express from "express";
-import { handleRequest } from "./handler";
+
+const database = new PrismaClient();
 
 const app = express();
 
@@ -8,7 +10,27 @@ app.use((request, _, next) => {
   next();
 });
 
-app.get("/", handleRequest);
+app.get("/", async (_, response) => {
+  return response.json(await database.user.findMany());
+});
+
+app.get("/new", async (request, response) => {
+  const name = request.query["name"];
+
+  if (typeof name !== "string") {
+    response.status(400).send("Missing name");
+    return;
+  }
+
+  console.log(`Creating new user with name '${name}'`);
+  const user = await database.user.create({
+    data: {
+      name,
+    },
+  });
+
+  response.json(user);
+});
 
 const PORT = process.env.PORT || 3000;
 

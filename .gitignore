@@ -3,3 +3,9 @@
 
 # esbuild
 /build/
+
+# dotenv
+/.env
+
+# Postgres
+/postgres-data/

@@ -15,12 +15,15 @@ RUN npm prune --omit=dev
 FROM base as build
 WORKDIR /fuel
 COPY --from=dependencies /fuel/node_modules /fuel/node_modules
+ADD prisma .
 ADD . .
+RUN npm run database:generate
 RUN npm run build
 
 FROM base
 WORKDIR /fuel
 COPY --from=production-dependencies /fuel/node_modules /fuel/node_modules
+COPY --from=build /fuel/node_modules/.prisma /fuel/node_modules/.prisma
 COPY --from=build /fuel/build /fuel/build
 ADD package.json CHECKS ./
 
