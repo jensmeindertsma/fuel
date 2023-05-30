@@ -67,11 +67,6 @@ jobs:
     runs-on: ubuntu-latest
     needs: [formatting, lint, typecheck]
     steps:
-      - name: Cancel previous runs
-        uses: styfle/cancel-workflow-action@0.11.0
-        with:
-          access_token: ${{ github.token }}
-
       - name: Check out repository
         uses: actions/checkout@v3
         with:
