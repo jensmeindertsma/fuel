@@ -1,15 +1,14 @@
-import express from "express";
-import compression from "compression";
-import morgan from "morgan";
-import closeWithGrace from "close-with-grace";
 import { createRequestHandler } from "@remix-run/express";
-import { type ServerBuild } from "@remix-run/node";
-
-import * as serverBuild from "../build/index.js";
-let build = serverBuild as unknown as ServerBuild;
+import closeWithGrace from "close-with-grace";
+import compression from "compression";
+import express from "express";
+import morgan from "morgan";
+import path from "path";
 
 const MODE = process.env.NODE_ENV;
 const PORT = process.env.PORT || 3000;
+
+const build = await import(path.join(process.cwd(), "build/index.js"));
 
 const app = express();
 
@@ -36,7 +35,11 @@ const server = app.listen(PORT, async () => {
   }
 });
 
-closeWithGrace(async () => {
+closeWithGrace(async ({ err }) => {
+  if (err) {
+    console.log("Shutting down server because of error: ", err);
+  }
+
   await new Promise((resolve, reject) => {
     server.close((e) => (e ? reject(e) : resolve("ok")));
   });

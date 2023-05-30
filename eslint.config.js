@@ -1,6 +1,7 @@
-import typescriptParser from "@typescript-eslint/parser";
-import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import eslint from "@eslint/js";
+import typescriptPlugin from "@typescript-eslint/eslint-plugin";
+import typescriptParser from "@typescript-eslint/parser";
+import simpleImportSort from "eslint-plugin-simple-import-sort";
 
 export default [
   {
@@ -21,10 +22,20 @@ export default [
     },
     rules: {
       ...typescriptPlugin.configs.recommended.rules,
+      "@typescript-eslint/consistent-type-imports": "warn",
     },
   },
 
   // TODO: eslint-plugin-react-hooks
+  {
+    files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
+    plugins: {
+      "simple-import-sort": simpleImportSort,
+    },
+    rules: {
+      "simple-import-sort/imports": "warn",
+    },
+  },
 ];
 
 // Hats off to the ESLint team for this new configuration system, it's dope!

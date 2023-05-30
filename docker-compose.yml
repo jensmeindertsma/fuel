@@ -3,7 +3,7 @@ services:
   web:
     build: .
     ports:
-      - "3000:3000"
+      - "3001:3000"
     depends_on:
       - database
     environment:
@@ -13,6 +13,8 @@ services:
   database:
     image: postgres:latest
     restart: always
+    ports:
+      - "5432:5432"
     environment:
       - POSTGRES_USER=jens
       - POSTGRES_PASSWORD=hotchoc

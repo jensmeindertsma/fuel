@@ -1,4 +1,8 @@
 import type { V2_MetaFunction } from "@remix-run/node";
+import { json } from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
+
+import { database } from "~/utils/database.server.ts";
 
 export const meta: V2_MetaFunction = () => {
   return [
@@ -7,6 +11,21 @@ export const meta: V2_MetaFunction = () => {
   ];
 };
 
+export async function loader() {
+  return json(await database.user.findMany());
+}
+
 export default function Index() {
-  return <h1>Fuel</h1>;
+  const data = useLoaderData<typeof loader>();
+
+  return (
+    <>
+      <h1>Fuel</h1>
+      <ul>
+        {data.map((user) => (
+          <li key={user.id}>Name: {user.name}</li>
+        ))}
+      </ul>
+    </>
+  );
 }
