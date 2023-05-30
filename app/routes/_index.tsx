@@ -20,7 +20,7 @@ export default function Index() {
 
   return (
     <>
-      <h1>Fuel</h1>
+      <h1>Fuel 2.0</h1>
       <ul>
         {data.map((user) => (
           <li key={user.id}>Name: {user.name}</li>

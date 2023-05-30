@@ -3,6 +3,7 @@
  */
 export default {
   cacheDirectory: "./node_modules/.cache/remix",
+  serverBuildPath: "./build/app/index.js",
   serverModuleFormat: "esm",
   serverPlatform: "node",
   future: {

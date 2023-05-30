@@ -1,14 +1,19 @@
+import path from "node:path";
+
 import { createRequestHandler } from "@remix-run/express";
+import { broadcastDevReady } from "@remix-run/node";
+import chokidar from "chokidar";
 import closeWithGrace from "close-with-grace";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
-import path from "path";
 
 const MODE = process.env.NODE_ENV;
 const PORT = process.env.PORT || 3000;
 
-const build = await import(path.join(process.cwd(), "build/index.js"));
+const BUILD_PATH = path.join(process.cwd(), "build/app/index.js");
+const build = await import(BUILD_PATH);
+let devBuild = build;
 
 const app = express();
 
@@ -24,13 +29,22 @@ app.use(
 
 app.use(express.static("public"));
 
-app.all("*", createRequestHandler({ build, mode: MODE }));
+app.all(
+  "*",
+  MODE === "development"
+    ? (request, response, next) => {
+        // Using a closure here allows the devBuild to be the latest changed version,
+        // it may be changed by `reloadBuild()`
+        const handleRequest = createRequestHandler({ build: devBuild });
+        handleRequest(request, response, next);
+      }
+    : createRequestHandler({ build })
+);
 
 const server = app.listen(PORT, async () => {
   console.log(`[SERVER] listening on http://localhost:${PORT}`);
 
   if (MODE === "development") {
-    const { broadcastDevReady } = await import("@remix-run/node");
     broadcastDevReady(build);
   }
 });
@@ -44,3 +58,17 @@ closeWithGrace(async ({ err }) => {
     server.close((e) => (e ? reject(e) : resolve("ok")));
   });
 });
+
+if (process.env.NODE_ENV === "development") {
+  async function reloadBuild() {
+    console.log("Fetching new build");
+    devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`);
+    console.log("Fetched new build");
+    broadcastDevReady(devBuild);
+  }
+
+  const watchPath = BUILD_PATH.replace(/\\/g, "/");
+  const watcher = chokidar.watch(watchPath, { ignoreInitial: true });
+  console.log(watchPath);
+  watcher.on("all", reloadBuild);
+}
