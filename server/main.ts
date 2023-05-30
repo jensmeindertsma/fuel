@@ -61,14 +61,11 @@ closeWithGrace(async ({ err }) => {
 
 if (process.env.NODE_ENV === "development") {
   async function reloadBuild() {
-    console.log("Fetching new build");
     devBuild = await import(`${BUILD_PATH}?update=${Date.now()}`);
-    console.log("Fetched new build");
     broadcastDevReady(devBuild);
   }
 
   const watchPath = BUILD_PATH.replace(/\\/g, "/");
   const watcher = chokidar.watch(watchPath, { ignoreInitial: true });
-  console.log(watchPath);
   watcher.on("all", reloadBuild);
 }
