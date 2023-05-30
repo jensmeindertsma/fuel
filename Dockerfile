@@ -25,7 +25,8 @@ COPY --from=production-dependencies /fuel/node_modules /fuel/node_modules
 COPY --from=build /fuel/node_modules/.prisma /fuel/node_modules/.prisma
 COPY --from=build /fuel/build /fuel/build
 ADD CHECKS package.json ./
-ADD prisma .
-RUN ls
+
+# For running possible database migrations.
+COPY prisma prisma
 
 CMD ["npm", "start"]
