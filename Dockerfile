@@ -24,6 +24,7 @@ WORKDIR /fuel
 COPY --from=production-dependencies /fuel/node_modules /fuel/node_modules
 COPY --from=build /fuel/node_modules/.prisma /fuel/node_modules/.prisma
 COPY --from=build /fuel/build /fuel/build
+COPY --from=build /fuel/public /fuel/public
 ADD CHECKS package.json ./
 
 # For running possible database migrations.

@@ -1,8 +1,12 @@
 # NPM
 /node_modules/
 
-# esbuild
+# Remix
 /build/
+/public/build/
 
 # dotenv
 /.env
+
+# Postgres
+/postgres-data/
