@@ -1,4 +1,5 @@
 FROM node:20-alpine as base
+RUN npm install -g npm
 ENV NODE_ENV production
 
 FROM base as dependencies
