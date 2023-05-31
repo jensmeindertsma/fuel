@@ -1,4 +1,4 @@
-import type { LinksFunction } from "@remix-run/node";
+import type { LinksResult } from "./types/remix.ts";
 import {
   Links,
   LiveReload,
@@ -7,10 +7,14 @@ import {
   Scripts,
   ScrollRestoration,
 } from "@remix-run/react";
+import styles from "~/styles/global.css";
 
-export const links: LinksFunction = () => {
-  return [{ href: "/favicon.png", rel: "icon", type: "image/png" }];
-};
+export function links(): LinksResult {
+  return [
+    { href: "/favicon.png", rel: "icon", type: "image/png" },
+    { rel: "stylesheet", href: styles },
+  ];
+}
 
 export default function App() {
   return (

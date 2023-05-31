@@ -1,7 +1,8 @@
 import eslint from "@eslint/js";
 import typescriptPlugin from "@typescript-eslint/eslint-plugin";
 import typescriptParser from "@typescript-eslint/parser";
-import simpleImportSort from "eslint-plugin-simple-import-sort";
+import importPlugin from "eslint-plugin-import";
+import simpleImportSortPlugin from "eslint-plugin-simple-import-sort";
 
 export default [
   {
@@ -30,10 +31,20 @@ export default [
   {
     files: ["**/*.js", "**/*.jsx", "**/*.ts", "**/*.tsx"],
     plugins: {
-      "simple-import-sort": simpleImportSort,
+      import: importPlugin,
+      "simple-import-sort": simpleImportSortPlugin,
     },
     rules: {
-      "simple-import-sort/imports": "warn",
+      "import/first": "warn",
+      "import/newline-after-import": "warn",
+      "import/no-duplicates": "warn",
+      "simple-import-sort/imports": [
+        "warn",
+        {
+          // No grouping, only alphabetical sorting.
+          groups: [],
+        },
+      ],
     },
   },
 ];

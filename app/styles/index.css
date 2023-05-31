@@ -1,0 +1,13 @@
+div {
+  margin: 5em auto 0;
+  width: 40%;
+}
+
+div h2 {
+  text-align: center;
+}
+
+form {
+  display: flex;
+  flex-direction: column;
+}

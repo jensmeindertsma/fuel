@@ -8,6 +8,7 @@ generator client {
 }
 
 model User {
-  id   Int    @id @default(autoincrement())
-  name String
+  id    String @id @default(cuid())
+  email String @unique
+  name  String
 }

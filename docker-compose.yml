@@ -9,6 +9,7 @@ services:
     environment:
       - PORT=3000
       - DATABASE_URL=postgresql://jens:hotchoc@database:5432/fuel
+      - SESSION_SECRET=abc
 
   database:
     image: postgres:latest

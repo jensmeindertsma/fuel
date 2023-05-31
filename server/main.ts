@@ -1,5 +1,3 @@
-import path from "node:path";
-
 import { createRequestHandler } from "@remix-run/express";
 import { broadcastDevReady } from "@remix-run/node";
 import chokidar from "chokidar";
@@ -7,6 +5,7 @@ import closeWithGrace from "close-with-grace";
 import compression from "compression";
 import express from "express";
 import morgan from "morgan";
+import path from "node:path";
 
 const MODE = process.env.NODE_ENV;
 const PORT = process.env.PORT || 3000;
