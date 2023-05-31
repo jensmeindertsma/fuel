@@ -1,5 +1,6 @@
-import { redirect } from "@remix-run/node";
-import { Form } from "@remix-run/react";
+import { Prisma } from "@prisma/client";
+import { json, redirect } from "@remix-run/node";
+import { Form, useActionData } from "@remix-run/react";
 import styles from "~/styles/index.css";
 import type {
   ActionArguments,
@@ -19,23 +20,34 @@ export async function action({ request }: ActionArguments) {
     throw new Error("TODO HANDLE FORM VALIDATION");
   }
 
-  const { id } = await database.user.create({
-    data: {
-      name,
-      email,
-    },
-    select: {
-      id: true,
-    },
-  });
+  try {
+    const { id } = await database.user.create({
+      data: {
+        name,
+        email,
+      },
+      select: {
+        id: true,
+      },
+    });
 
-  session.set("id", id);
+    session.set("id", id);
 
-  return redirect("/log", {
-    headers: {
-      "Set-Cookie": await commitSession(session),
-    },
-  });
+    return redirect("/log", {
+      headers: {
+        "Set-Cookie": await commitSession(session),
+      },
+    });
+  } catch (error) {
+    if (error instanceof Prisma.PrismaClientKnownRequestError) {
+      // The .code property can be accessed in a type-safe manner
+      if (error.code === "P2002") {
+        return json("A user with this email already exists", 400);
+      }
+    }
+
+    throw error;
+  }
 }
 
 export function meta(): MetaResult {
@@ -50,6 +62,8 @@ export function links(): LinksResult {
 }
 
 export default function Home() {
+  const error = useActionData<typeof action>();
+
   return (
     <>
       <div>
@@ -60,6 +74,7 @@ export default function Home() {
           <label htmlFor="email">Email Address</label>
           <input type="email" required id="email" name="email" />
           <button type="submit">Sign up</button>
+          <p style={{ color: "red" }}>{error}</p>
         </Form>
       </div>
     </>
