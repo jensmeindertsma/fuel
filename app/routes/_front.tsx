@@ -29,6 +29,9 @@ export default function FrontLayout() {
         <nav>
           <ul>
             <li>
+              <Link to="/">Sign up</Link>
+            </li>
+            <li>
               <Link to="/signin">Sign in</Link>
             </li>
           </ul>

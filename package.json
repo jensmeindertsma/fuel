@@ -17,6 +17,8 @@
     "typecheck": "tsc"
   },
   "dependencies": {
+    "@conform-to/react": "^0.6.3",
+    "@conform-to/zod": "^0.6.3",
     "@prisma/client": "^4.15.0",
     "@remix-run/express": "^1.16.1",
     "@remix-run/node": "^1.16.1",
@@ -28,7 +30,8 @@
     "isbot": "^3.6.10",
     "morgan": "^1.10.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "zod": "^3.21.4"
   },
   "devDependencies": {
     "@eslint/js": "^8.41.0",
