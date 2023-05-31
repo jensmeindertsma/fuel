@@ -32,5 +32,5 @@ export async function loader({ request }: LoaderArguments) {
 export default function Log() {
   const name = useLoaderData<typeof loader>();
 
-  return <h1>Let's get logging, {name}</h1>;
+  return <h1 style={{ marginTop: "2em" }}>Let's get logging, {name}</h1>;
 }
