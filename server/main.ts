@@ -17,7 +17,13 @@ let devBuild = build;
 const app = express();
 
 app.use(compression());
-app.use(morgan("tiny"));
+app.use(
+  morgan("tiny", {
+    skip(request) {
+      return request.originalUrl.startsWith("/build/");
+    },
+  })
+);
 
 app.disable("x-powered-by");
 

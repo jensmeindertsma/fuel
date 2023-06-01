@@ -9,7 +9,10 @@ const cookie = createCookie("fuel", {
   secure: process.env.NODE_ENV === "production",
 });
 
+type SessionData = Record<never, never>;
+type FlashData = Record<never, never>;
+
 export const { getSession, commitSession, destroySession } =
-  createCookieSessionStorage<{ id: string }>({
+  createCookieSessionStorage<SessionData, FlashData>({
     cookie,
   });
