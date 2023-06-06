@@ -4,12 +4,13 @@ import { Form, useActionData, useNavigation } from "@remix-run/react";
 import type { MetaResult } from "~/types/remix.ts";
 import { generateCode } from "~/utils/authentication.server.ts";
 import { database } from "~/utils/database.server.ts";
-import { sendAuthenticationCode, sendEmail } from "~/utils/email.server.ts";
-import { encrypt } from "~/utils/encryption.server.ts";
+import { sendEmail } from "~/utils/email.server.ts";
+import { decrypt, encrypt } from "~/utils/encryption.server.ts";
 import { badRequest } from "~/utils/http.server.ts";
 import { formatTitle } from "~/utils/meta.ts";
 import { redirectUser } from "~/utils/session.server.ts";
-import { hasFeedback, parseFormData } from "~/utils/validation.server.ts";
+import { parseFormData } from "~/utils/validation.server.ts";
+import { useEffect, useRef } from "react";
 import { z } from "zod";
 
 enum Intent {
@@ -33,62 +34,69 @@ export async function action({ request }: ActionArgs) {
         name: z.string(),
         email: z.string().email("Please provide a valid email address"),
       });
-      const { values, feedback } = parseFormData(formData, schema);
+      const { success, values, issues } = parseFormData(formData, schema);
 
-      if (feedback && Object.values(feedback).some(Boolean)) {
+      if (!success) {
         return badRequest({
           status: Status.SigningUp as const,
           values,
-          feedback,
+          issues,
         });
       }
 
+      // Make sure email is available.
       if (await database.user.findUnique({ where: { email: values.email } })) {
         return badRequest({
           status: Status.SigningUp as const,
           values,
-          feedback: {
-            ...feedback,
+          issues: {
+            ...issues,
             email: "This email address is already in use!",
           },
         });
       }
 
       const code = generateCode();
-      const error = await sendEmail({
-        to: values.email,
-        subject: "Your authentication code for Fuel",
-        text: `Use the following code to log in to Fuel: ${code}`,
-        html: `
-          <!DOCTYPE html>
-            <html>
-            <body>
-              <h1>Use ${code} to log into Fuel</h1>
-            </body>
-          </html>
-        `,
-      });
 
-      if (typeof error === "string") {
-        return badRequest({
-          status: Status.SigningUp as const,
-          values,
-          feedback: {
-            ...feedback,
-            formError:
-              "Failed to send you an authentication code by email. Please try again and contact `fuel@jensmeindertsma.com` for assistance if the problem persists.",
-          },
+      if (process.env.NODE_ENV === "production") {
+        const error = await sendEmail({
+          to: values.email,
+          subject: "Your authentication code for Fuel",
+          text: `Use the following code to get started with Fuel: ${code}`,
+          html: `
+            <!DOCTYPE html>
+              <html>
+              <body>
+                <h1>Use ${code} to start using Fuel</h1>
+              </body>
+            </html>
+          `,
         });
+
+        if (error) {
+          return badRequest({
+            status: Status.SigningUp as const,
+            values,
+            issues: {
+              ...issues,
+              formError:
+                "Failed to send you an authentication code by email. Please try again and contact `fuel@jensmeindertsma.com` for assistance if the problem persists.",
+            },
+          });
+        }
+      } else {
+        console.log("AUTH CODE: " + code);
       }
 
+      // Progress to next stage, show form for entering the code.
       return json({
         status: Status.Authenticating as const,
+        issues: null,
         values: {
           ...values,
           code: "",
           encryptedCode: encrypt(code),
         },
-        feedback: null,
       });
     }
 
@@ -100,34 +108,34 @@ export async function action({ request }: ActionArgs) {
         code: z.string(),
       });
 
-      const result = parseFormData(formData, schema);
+      const { success, values, issues } = parseFormData(formData, schema);
 
-      if (typeof result.feedback === "undefined") {
-        throw new Error("Foo");
-      }
+      if (!success) {
+        if (issues?.name || issues?.email || issues?.encryptedCode) {
+          throw badRequest({
+            error:
+              "Did not receive back the name or email or encrypted code from verification form!",
+          });
+        }
 
-      if (
-        result.feedback?.name ||
-        result.feedback?.email ||
-        result.feedback?.encryptedCode
-      ) {
-        throw badRequest({
-          error:
-            "Did not receive back the name or email or encrypted code from verification form!",
+        return badRequest({
+          status: Status.Authenticating as const,
+          values,
+          issues,
         });
       }
 
-      if (result.feedback?.code || result.feedback?.formError) {
+      if (decrypt(values.encryptedCode) !== values.code) {
         return badRequest({
           status: Status.Authenticating as const,
-          values: result.values,
-          feedback: result.feedback,
+          values,
+          issues,
         });
       }
 
       const user = await database.user.create({
         data: {
-          name: result.values.name,
+          name: values.name,
           email: values.email,
         },
         select: { id: true },
@@ -158,46 +166,55 @@ export function meta(): MetaResult {
 export default function SignUp() {
   const submission = useActionData<typeof action>();
   const navigation = useNavigation();
+  const formRef = useRef<HTMLFormElement>(null);
 
+  const isSubmitting =
+    navigation.state === "submitting" &&
+    navigation.formData.get("intent") === Intent.SignUp;
+  useEffect(() => {
+    formRef.current?.reset();
+  }, [isSubmitting]);
+
+  let form;
   if (submission?.status === Status.Authenticating) {
-    return (
-      <Form method="post">
-        <h2>Sign Up</h2>
-        <fieldset disabled={navigation.state === "submitting"}>
-          <input type="hidden" name="intent" value={Intent.Authenticate} />
-          <input type="hidden" name="name" value={submission.values.name} />
-          <input type="hidden" name="email" value={submission.values.email} />
+    form = (
+      <>
+        <input type="hidden" name="intent" value={Intent.Authenticate} />
+        <input type="hidden" name="name" value={submission.values.name} />
+        <input type="hidden" name="email" value={submission.values.email} />
+        <input
+          type="hidden"
+          name="encryptedCode"
+          value={submission.values.encryptedCode}
+        />
 
-          <label htmlFor="code">Code</label>
-          <input
-            type="text"
-            inputMode="numeric"
-            id="code"
-            name="code"
-            required
-            defaultValue={submission?.values.code}
-          />
-          {submission?.feedback?.code && (
-            <p style={{ color: "red" }}>{submission?.feedback.code}</p>
-          )}
+        <label htmlFor="code">Code</label>
+        <input
+          type="text"
+          id="code"
+          name="code"
+          required
+          defaultValue={submission?.values.code}
+        />
+        {submission?.issues?.code && (
+          <p style={{ color: "red" }}>{submission?.issues.code}</p>
+        )}
 
-          <button type="submit">
-            {navigation.state === "submitting"
-              ? "Authenticating ..."
-              : "Authenticate"}
-          </button>
-          {submission?.feedback?.formError && (
-            <p style={{ color: "red" }}>{submission?.feedback.formError}</p>
-          )}
-        </fieldset>
-      </Form>
+        <button type="submit">
+          {navigation.state === "submitting"
+            ? "Authenticating ..."
+            : "Authenticate"}
+        </button>
+        {submission?.issues?.formError && (
+          <p style={{ color: "red" }}>{submission?.issues.formError}</p>
+        )}
+      </>
     );
-  }
+  } else {
+    form = (
+      <>
+        <input type="hidden" name="intent" value={Intent.SignUp} />
 
-  return (
-    <Form method="post">
-      <h2>Sign Up</h2>
-      <fieldset disabled={navigation.state === "submitting"}>
         <label htmlFor="name">Name</label>
         <input
           type="text"
@@ -206,8 +223,8 @@ export default function SignUp() {
           required
           defaultValue={submission?.values.name}
         />
-        {submission?.feedback?.name && (
-          <p style={{ color: "red" }}>{submission?.feedback.name}</p>
+        {submission?.issues?.name && (
+          <p style={{ color: "red" }}>{submission?.issues.name}</p>
         )}
 
         <label htmlFor="email">Email Address</label>
@@ -218,17 +235,24 @@ export default function SignUp() {
           required
           defaultValue={submission?.values.email}
         />
-        {submission?.feedback?.email && (
-          <p style={{ color: "red" }}>{submission?.feedback.email}</p>
+        {submission?.issues?.email && (
+          <p style={{ color: "red" }}>{submission?.issues.email}</p>
         )}
 
         <button type="submit">
           {navigation.state === "submitting" ? "Signing up..." : "Sign up"}
         </button>
-        {submission?.feedback?.formError && (
-          <p style={{ color: "red" }}>{submission?.feedback.formError}</p>
+        {submission?.issues?.formError && (
+          <p style={{ color: "red" }}>{submission?.issues.formError}</p>
         )}
-      </fieldset>
+      </>
+    );
+  }
+
+  return (
+    <Form method="post" ref={formRef}>
+      <h2>Sign Up</h2>
+      <fieldset disabled={navigation.state === "submitting"}>{form}</fieldset>
     </Form>
   );
 }

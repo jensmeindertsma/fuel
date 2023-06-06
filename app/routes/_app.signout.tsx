@@ -7,7 +7,7 @@ export async function action({ request }: ActionArgs) {
 
   return redirect("/", {
     headers: {
-      "Set-Cookie": await session.commit(),
+      "Set-Cookie": await session.destroy(),
     },
   });
 }
