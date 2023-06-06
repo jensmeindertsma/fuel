@@ -1,63 +1,49 @@
 import type { z } from "zod";
 
-type IncompleteFeedback<O> = {
-  [K in keyof O]: { value: string; error?: string };
-};
-
-type Feedback<O> = {
-  values: { [K in keyof O]: O[K] };
-  issues: { [K in keyof O]: string | undefined };
-};
-
-function generateFeedback<O>(
-  error: z.ZodError<O>,
-  values: {
-    [k: string]: string;
-  }
-): Feedback<O> {
-  const flattenedError = error.flatten();
-
-  let incompleteFeedback = Object.entries(flattenedError.fieldErrors).reduce(
-    function (result, entry) {
-      // Why can't `Object.entries` just do it's job :(
-      let [fieldName, fieldErrors] = entry as [string, string[]];
-
-      // TODO: consider file uploads
-      result[fieldName as keyof IncompleteFeedback<O>] = {
-        value: values[fieldName],
-        error: fieldErrors[0],
-      };
-      return result;
-    },
-    {} as IncompleteFeedback<O>
-  );
-
-  let completeFeedback = incompleteFeedback as Feedback<O>;
-  completeFeedback.formError = flattenedError.formErrors[0];
-
-  return completeFeedback;
-}
-
-export async function parseFormData<O>(
+export function parseFormData<O extends object>(
   formData: FormData,
-  schema: z.Schema<O>
-): Promise<Feedback<O>> {
-  const values = Object.fromEntries(formData);
-  const result = schema.safeParse(values);
+  schema: z.ZodSchema<O>
+): ParseResult<O> {
+  const rawValues = Object.fromEntries(formData);
+  const result = schema.safeParse(rawValues);
 
   if (result.success) {
-    return { data: result.data, issues: null };
+    return {
+      feedback: {},
+    };
   }
 
-  if (contains_files(values)) {
-    throw new Error("");
-  }
+  const values = Object.keys(rawValues).reduce((acc, key) => {
+    acc[key] = typeof rawValues[key] === "string" ? rawValues[key] : "";
+    return acc;
+  }, {} as { [K in keyof O]: string });
 
-  return { data: null, issues: generateFeedback(result.error, values) };
+  return {
+    feedback: {},
+  };
 }
 
-function contains_files(data: {
-  [k: string]: FormDataEntryValue;
-}): data is { [k: string]: string | File } {
-  return Object.values(data).some((value) => value instanceof File);
+type ParseResult<O> =
+  | {
+      values: { [K in keyof O]: O[K] };
+      feedback: undefined;
+    }
+  | {
+      values: { [K in keyof O]?: O[K] };
+      feedback: { [K in keyof O]?: string } & {
+        formError?: string;
+      };
+    };
+
+export function feedbackIsProblematic<O>(
+  parseResult: ParseResult<O>
+): parseResult is {
+  values: { [K in keyof O]?: O[K] };
+  feedback: { [K in keyof O]?: string } & {
+    formError?: string;
+  };
+} {
+  return Object.values(
+    parseResult.feedback === null ? {} : parseResult.feedback
+  ).some(Boolean);
 }
