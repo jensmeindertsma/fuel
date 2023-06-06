@@ -25,9 +25,14 @@ export async function getSession(request: Request) {
     request.headers.get("Cookie")
   );
 
+  let { has, get, set, unset, flash } = session;
+
   return {
-    ...session,
-    id: undefined,
+    has,
+    get,
+    set,
+    unset,
+    flash,
     async commit() {
       return await sessionStorage.commitSession(session);
     },
