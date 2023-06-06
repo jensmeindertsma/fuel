@@ -10,7 +10,7 @@ import { badRequest } from "~/utils/http.server.ts";
 import { formatTitle } from "~/utils/meta.ts";
 import { redirectUser } from "~/utils/session.server.ts";
 import { parseFormData } from "~/utils/validation.server.ts";
-import { useEffect, useRef } from "react";
+import { Fragment } from "react";
 import { z } from "zod";
 
 enum Intent {
@@ -166,19 +166,11 @@ export function meta(): MetaResult {
 export default function SignUp() {
   const submission = useActionData<typeof action>();
   const navigation = useNavigation();
-  const formRef = useRef<HTMLFormElement>(null);
-
-  const isSubmitting =
-    navigation.state === "submitting" &&
-    navigation.formData.get("intent") === Intent.SignUp;
-  useEffect(() => {
-    formRef.current?.reset();
-  }, [isSubmitting]);
 
   let form;
   if (submission?.status === Status.Authenticating) {
     form = (
-      <>
+      <Fragment key={Intent.Authenticate}>
         <input type="hidden" name="intent" value={Intent.Authenticate} />
         <input type="hidden" name="name" value={submission.values.name} />
         <input type="hidden" name="email" value={submission.values.email} />
@@ -208,11 +200,11 @@ export default function SignUp() {
         {submission?.issues?.formError && (
           <p style={{ color: "red" }}>{submission?.issues.formError}</p>
         )}
-      </>
+      </Fragment>
     );
   } else {
     form = (
-      <>
+      <Fragment key={Intent.SignUp}>
         <input type="hidden" name="intent" value={Intent.SignUp} />
 
         <label htmlFor="name">Name</label>
@@ -245,12 +237,12 @@ export default function SignUp() {
         {submission?.issues?.formError && (
           <p style={{ color: "red" }}>{submission?.issues.formError}</p>
         )}
-      </>
+      </Fragment>
     );
   }
 
   return (
-    <Form method="post" ref={formRef}>
+    <Form method="post">
       <h2>Sign Up</h2>
       <fieldset disabled={navigation.state === "submitting"}>{form}</fieldset>
     </Form>

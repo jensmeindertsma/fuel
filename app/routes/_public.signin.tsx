@@ -10,6 +10,7 @@ import { badRequest } from "~/utils/http.server.ts";
 import { formatTitle } from "~/utils/meta.ts";
 import { redirectUser } from "~/utils/session.server.ts";
 import { parseFormData } from "~/utils/validation.server.ts";
+import { Fragment } from "react";
 import { z } from "zod";
 
 enum Intent {
@@ -165,7 +166,7 @@ export default function SignIn() {
   let form;
   if (submission?.status === Status.Authenticating) {
     form = (
-      <>
+      <Fragment key={Intent.Authenticate}>
         <input type="hidden" name="intent" value={Intent.Authenticate} />
         <input type="hidden" name="email" value={submission.values.email} />
         <input
@@ -195,11 +196,11 @@ export default function SignIn() {
         {submission?.issues?.formError && (
           <p style={{ color: "red" }}>{submission?.issues.formError}</p>
         )}
-      </>
+      </Fragment>
     );
   } else {
     form = (
-      <>
+      <Fragment key={Intent.SignIn}>
         <input type="hidden" name="intent" value={Intent.SignIn} />
 
         <label htmlFor="email">Email Address</label>
@@ -215,18 +216,18 @@ export default function SignIn() {
         )}
 
         <button type="submit">
-          {navigation.state === "submitting" ? "Signing up..." : "Sign up"}
+          {navigation.state === "submitting" ? "Signing in..." : "Sign in"}
         </button>
         {submission?.issues?.formError && (
           <p style={{ color: "red" }}>{submission?.issues.formError}</p>
         )}
-      </>
+      </Fragment>
     );
   }
 
   return (
     <Form method="post">
-      <h2>Sign Up</h2>
+      <h2>Sign In</h2>
       <fieldset disabled={navigation.state === "submitting"}>{form}</fieldset>
     </Form>
   );
