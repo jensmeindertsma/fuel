@@ -28,7 +28,7 @@ export async function loader({ request }: LoaderArgs) {
   return json({ name: user.name });
 }
 
-export default function Overview() {
+export default function Home() {
   const { name } = useLoaderData<typeof loader>();
 
   return <h2>Welcome {name}!</h2>;

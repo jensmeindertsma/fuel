@@ -11,3 +11,7 @@ export async function action({ request }: ActionArgs) {
     },
   });
 }
+
+export function loader() {
+  return redirect("/app");
+}
