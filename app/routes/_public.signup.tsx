@@ -24,7 +24,7 @@ enum Status {
 }
 
 export async function action({ request }: ActionArgs) {
-  const session = await redirectUser(request, "/dashboard");
+  const session = await redirectUser(request, "/me");
   const formData = await request.formData();
 
   const intent = formData.get("intent");
@@ -142,7 +142,7 @@ export async function action({ request }: ActionArgs) {
       });
 
       session.set("id", user.id);
-      return redirect("/dashboard", {
+      return redirect("/me", {
         headers: {
           "Set-Cookie": await session.commit(),
         },

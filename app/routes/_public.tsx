@@ -4,7 +4,7 @@ import { Link, Outlet } from "@remix-run/react";
 import { redirectUser } from "~/utils/session.server.ts";
 
 export async function loader({ request }: LoaderArgs) {
-  await redirectUser(request, "/dashboard");
+  await redirectUser(request, "/me");
 
   return json(null);
 }

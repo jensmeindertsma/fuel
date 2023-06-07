@@ -1,5 +1,11 @@
 import { json } from "@remix-run/node";
 
-export function badRequest<D>(data: D, init?: Omit<ResponseInit, "status">) {
+type Init = Omit<ResponseInit, "status">;
+
+export function badRequest<D>(data: D, init?: Init) {
   return json(data, { ...init, status: 400 });
+}
+
+export function notFound<D>(data: D, init?: Init) {
+  return json(data, { ...init, status: 404 });
 }

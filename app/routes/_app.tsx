@@ -1,6 +1,6 @@
 import type { LoaderArgs } from "@remix-run/node";
 import { json } from "@remix-run/node";
-import { Outlet } from "@remix-run/react";
+import { Form, Link, Outlet } from "@remix-run/react";
 import { requireId } from "~/utils/session.server.ts";
 
 export async function loader({ request }: LoaderArgs) {
@@ -9,5 +9,27 @@ export async function loader({ request }: LoaderArgs) {
 }
 
 export default function App() {
-  return <Outlet />;
+  return (
+    <>
+      <header style={{ display: "flex", flexDirection: "row" }}>
+        <h2>Fuel</h2>
+        TODO NAME
+        <nav>
+          <ul
+            style={{ display: "flex", flexDirection: "row", listStyle: "none" }}
+          >
+            <li>
+              <Link to="/settings">Settings</Link>
+            </li>
+            <li>
+              <Form method="post" action="/signout">
+                <button type="submit">Sign out</button>
+              </Form>
+            </li>
+          </ul>
+        </nav>
+      </header>
+      <Outlet />
+    </>
+  );
 }
